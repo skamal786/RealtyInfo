@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealtyInfo - Canadian Real Estate Price Predictions</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background-color: #F9FAFB;
+            color: #1F2937;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #E5E7EB;
+            padding: 32px 0;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 8px;
+        }
+
+        .logo-icon {
+            font-size: 36px;
+            margin-right: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #6B7280;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: white;
+            padding: 40px 0;
+            margin-bottom: 32px;
+        }
+
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #6B7280;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 48px;
+            padding: 12px 16px 12px 48px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-button {
+            height: 48px;
+            padding: 0 24px;
+            background: #2563EB;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .search-button:hover {
+            background: #1D4ED8;
+        }
+
+        .search-button:active {
+            background: #1E40AF;
+        }
+
+        /* Autocomplete Dropdown */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: #F9FAFB;
+        }
+
+        .autocomplete-item.selected {
+            background: #EFF6FF;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .empty-state-title {
+            font-size: 20px;
+            color: #1F2937;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            color: #6B7280;
+            margin-bottom: 24px;
+        }
+
+        .empty-state-cities {
+            font-size: 14px;
+            color: #9CA3AF;
+        }
+
+        /* Results Section */
+        .results-header {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin: 32px 0 24px 0;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 1024px) {
+            .results-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Property Card */
+        .property-card {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .property-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .property-card:nth-child(1) { animation-delay: 0s; }
+        .property-card:nth-child(2) { animation-delay: 0.1s; }
+        .property-card:nth-child(3) { animation-delay: 0.2s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .card-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .price-section {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .price-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .price-label {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1F2937;
+        }
+
+        .price-value.prediction {
+            font-size: 24px;
+        }
+
+        .price-change {
+            font-size: 14px;
+            color: #10B981;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* Info Footer */
+        .info-footer {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .info-item {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .expand-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .expand-trigger {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #2563EB;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .expand-trigger:hover {
+            color: #1D4ED8;
+        }
+
+        .expand-arrow {
+            transition: transform 0.2s;
+        }
+
+        .expand-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .expand-content {
+            margin-top: 12px;
+            padding-left: 28px;
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.6;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .error-title {
+            font-size: 20px;
+            color: #1F2937;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .error-text {
+            font-size: 16px;
+            color: #6B7280;
+            margin-bottom: 16px;
+        }
+
+        .available-cities {
+            font-size: 14px;
+            color: #9CA3AF;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .header {
+                padding: 24px 0;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .logo-icon {
+                font-size: 28px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+
+            .search-section {
+                padding: 24px 0;
+            }
+
+            .search-wrapper {
+                flex-direction: column;
+            }
+
+            .search-button {
+                width: 100%;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .property-card {
+                padding: 20px;
+            }
+
+            .price-value {
+                font-size: 24px;
+            }
+
+            .price-value.prediction {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Real estate data for Canadian cities
+        const realtyData = {
+            "Toronto": {
+                detached: { current: 1450000, growthRate: 0.045 },
+                townhouse: { current: 875000, growthRate: 0.052 },
+                condo: { current: 685000, growthRate: 0.038 }
+            },
+            "Vancouver": {
+                detached: { current: 1950000, growthRate: 0.042 },
+                townhouse: { current: 1150000, growthRate: 0.048 },
+                condo: { current: 785000, growthRate: 0.035 }
+            },
+            "Calgary": {
+                detached: { current: 625000, growthRate: 0.055 },
+                townhouse: { current: 425000, growthRate: 0.058 },
+                condo: { current: 315000, growthRate: 0.042 }
+            },
+            "Montreal": {
+                detached: { current: 625000, growthRate: 0.048 },
+                townhouse: { current: 475000, growthRate: 0.051 },
+                condo: { current: 425000, growthRate: 0.044 }
+            },
+            "Ottawa": {
+                detached: { current: 725000, growthRate: 0.046 },
+                townhouse: { current: 525000, growthRate: 0.049 },
+                condo: { current: 425000, growthRate: 0.041 }
+            },
+            "Edmonton": {
+                detached: { current: 475000, growthRate: 0.052 },
+                townhouse: { current: 325000, growthRate: 0.055 },
+                condo: { current: 265000, growthRate: 0.043 }
+            },
+            "Mississauga": {
+                detached: { current: 1250000, growthRate: 0.044 },
+                townhouse: { current: 825000, growthRate: 0.050 },
+                condo: { current: 625000, growthRate: 0.037 }
+            },
+            "Winnipeg": {
+                detached: { current: 425000, growthRate: 0.046 },
+                townhouse: { current: 325000, growthRate: 0.049 },
+                condo: { current: 285000, growthRate: 0.040 }
+            },
+            "Quebec City": {
+                detached: { current: 425000, growthRate: 0.045 },
+                townhouse: { current: 325000, growthRate: 0.047 },
+                condo: { current: 285000, growthRate: 0.041 }
+            },
+            "Hamilton": {
+                detached: { current: 925000, growthRate: 0.048 },
+                townhouse: { current: 675000, growthRate: 0.053 },
+                condo: { current: 525000, growthRate: 0.040 }
+            },
+            "Victoria": {
+                detached: { current: 1150000, growthRate: 0.040 },
+                townhouse: { current: 725000, growthRate: 0.045 },
+                condo: { current: 565000, growthRate: 0.034 }
+            },
+            "Halifax": {
+                detached: { current: 525000, growthRate: 0.051 },
+                townhouse: { current: 425000, growthRate: 0.054 },
+                condo: { current: 375000, growthRate: 0.045 }
+            },
+            "London": {
+                detached: { current: 675000, growthRate: 0.047 },
+                townhouse: { current: 525000, growthRate: 0.050 },
+                condo: { current: 425000, growthRate: 0.042 }
+            },
+            "Surrey": {
+                detached: { current: 1450000, growthRate: 0.043 },
+                townhouse: { current: 925000, growthRate: 0.047 },
+                condo: { current: 625000, growthRate: 0.036 }
+            }
+        };
+
+        // Prediction calculation
+        function predictPrice(currentPrice, growthRate, years) {
+            return Math.round(currentPrice * Math.pow(1 + growthRate, years));
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-CA', {
+                style: 'currency',
+                currency: 'CAD',
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Calculate percentage change
+        function calculatePercentChange(current, predicted) {
+            return ((predicted - current) / current * 100).toFixed(1);
+        }
+
+        // Property Card Component
+        function PropertyCard({ type, icon, data }) {
+            const twoYearPrice = predictPrice(data.current, data.growthRate, 2);
+            const fiveYearPrice = predictPrice(data.current, data.growthRate, 5);
+            const twoYearChange = calculatePercentChange(data.current, twoYearPrice);
+            const fiveYearChange = calculatePercentChange(data.current, fiveYearPrice);
+
+            return (
+                <div className="property-card">
+                    <div className="card-header">
+                        <div className="card-icon">{icon}</div>
+                        <div className="card-title">{type}</div>
+                    </div>
+
+                    <div className="price-section">
+                        <div className="price-label">Current Average</div>
+                        <div className="price-value">{formatCurrency(data.current)}</div>
+                    </div>
+
+                    <div className="price-section">
+                        <div className="price-label">In 2 Years</div>
+                        <div className="price-value prediction">{formatCurrency(twoYearPrice)}</div>
+                        <div className="price-change">+{twoYearChange}% ↗</div>
+                    </div>
+
+                    <div className="price-section">
+                        <div className="price-label">In 5 Years</div>
+                        <div className="price-value prediction">{formatCurrency(fiveYearPrice)}</div>
+                        <div className="price-change">+{fiveYearChange}% ↗</div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedCity, setSelectedCity] = useState(null);
+            const [showDropdown, setShowDropdown] = useState(false);
+            const [expandedInfo, setExpandedInfo] = useState(false);
+            const [selectedIndex, setSelectedIndex] = useState(-1);
+            const inputRef = useRef(null);
+
+            const cities = Object.keys(realtyData);
+            
+            // Filter cities based on search term
+            const filteredCities = searchTerm
+                ? cities.filter(city => 
+                    city.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                : [];
+
+            // Handle search
+            const handleSearch = (city) => {
+                if (city && realtyData[city]) {
+                    setSelectedCity(city);
+                    setSearchTerm(city);
+                    setShowDropdown(false);
+                    setSelectedIndex(-1);
+                }
+            };
+
+            // Handle input change
+            const handleInputChange = (e) => {
+                const value = e.target.value;
+                setSearchTerm(value);
+                setShowDropdown(value.length > 0);
+                setSelectedIndex(-1);
+                
+                // Clear selected city if input is cleared
+                if (!value) {
+                    setSelectedCity(null);
+                }
+            };
+
+            // Handle keyboard navigation
+            const handleKeyDown = (e) => {
+                if (!showDropdown || filteredCities.length === 0) return;
+
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        setSelectedIndex(prev => 
+                            prev < filteredCities.length - 1 ? prev + 1 : prev
+                        );
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedIndex >= 0) {
+                            handleSearch(filteredCities[selectedIndex]);
+                        } else if (filteredCities.length === 1) {
+                            handleSearch(filteredCities[0]);
+                        }
+                        break;
+                    case 'Escape':
+                        setShowDropdown(false);
+                        setSelectedIndex(-1);
+                        break;
+                }
+            };
+
+            // Click outside to close dropdown
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (inputRef.current && !inputRef.current.contains(e.target)) {
+                        setShowDropdown(false);
+                        setSelectedIndex(-1);
+                    }
+                };
+
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
+
+            return (
+                <>
+                    {/* Header */}
+                    <header className="header">
+                        <div className="container">
+                            <h1 className="logo">
+                                <span className="logo-icon">🏠</span>
+                                RealtyInfo
+                            </h1>
+                            <p className="subtitle">Canadian Real Estate Price Predictions</p>
+                        </div>
+                    </header>
+
+                    {/* Search Section */}
+                    <section className="search-section">
+                        <div className="container">
+                            <div className="search-container" ref={inputRef}>
+                                <div className="search-wrapper">
+                                    <div className="input-wrapper">
+                                        <span className="search-icon">🔍</span>
+                                        <input
+                                            type="text"
+                                            className="search-input"
+                                            placeholder="Enter Canadian city name..."
+                                            value={searchTerm}
+                                            onChange={handleInputChange}
+                                            onKeyDown={handleKeyDown}
+                                            autoComplete="off"
+                                        />
+                                        
+                                        {/* Autocomplete Dropdown */}
+                                        {showDropdown && filteredCities.length > 0 && (
+                                            <div className="autocomplete-dropdown">
+                                                {filteredCities.map((city, index) => (
+                                                    <div
+                                                        key={city}
+                                                        className={`autocomplete-item ${index === selectedIndex ? 'selected' : ''}`}
+                                                        onClick={() => handleSearch(city)}
+                                                        onMouseEnter={() => setSelectedIndex(index)}
+                                                    >
+                                                        {city}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button 
+                                        className="search-button"
+                                        onClick={() => handleSearch(searchTerm)}
+                                    >
+                                        Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Main Content */}
+                    <main className="container">
+                        {!selectedCity && !searchTerm && (
+                            // Empty State
+                            <div className="empty-state">
+                                <div className="empty-state-icon">🏙️</div>
+                                <h2 className="empty-state-title">Search for a Canadian city to see</h2>
+                                <p className="empty-state-text">real estate prices and predictions</p>
+                                <p className="empty-state-cities">
+                                    Try: Toronto, Vancouver, Calgary, Montreal, Ottawa, and more...
+                                </p>
+                            </div>
+                        )}
+
+                        {searchTerm && !selectedCity && filteredCities.length === 0 && (
+                            // Error State
+                            <div className="error-state">
+                                <div className="error-icon">❌</div>
+                                <h2 className="error-title">Sorry, we don't have data for "{searchTerm}"</h2>
+                                <p className="error-text">Currently available cities:</p>
+                                <p className="available-cities">
+                                    {cities.join(', ')}
+                                </p>
+                            </div>
+                        )}
+
+                        {selectedCity && realtyData[selectedCity] && (
+                            <>
+                                {/* Results */}
+                                <h2 className="results-header">
+                                    Real Estate Prices in {selectedCity}
+                                </h2>
+
+                                <div className="results-grid">
+                                    <PropertyCard
+                                        type="Detached Home"
+                                        icon="🏠"
+                                        data={realtyData[selectedCity].detached}
+                                    />
+                                    <PropertyCard
+                                        type="Townhouse"
+                                        icon="🏘️"
+                                        data={realtyData[selectedCity].townhouse}
+                                    />
+                                    <PropertyCard
+                                        type="Condo"
+                                        icon="🏢"
+                                        data={realtyData[selectedCity].condo}
+                                    />
+                                </div>
+
+                                {/* Info Footer */}
+                                <div className="info-footer">
+                                    <div className="info-item">
+                                        <span className="info-icon">💡</span>
+                                        <span>
+                                            Price predictions are estimates based on historical trends and 
+                                            should not be considered financial advice.
+                                        </span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-icon">📊</span>
+                                        <span>Data updated: January 2025</span>
+                                    </div>
+
+                                    <div className="expand-section">
+                                        <div 
+                                            className="expand-trigger"
+                                            onClick={() => setExpandedInfo(!expandedInfo)}
+                                        >
+                                            <span className="info-icon">ℹ️</span>
+                                            <span>How predictions work</span>
+                                            <span className={`expand-arrow ${expandedInfo ? 'open' : ''}`}>▼</span>
+                                        </div>
+                                        {expandedInfo && (
+                                            <div className="expand-content">
+                                                Our predictions use a compound annual growth rate (CAGR) formula 
+                                                based on historical market trends for each city and property type. 
+                                                The formula calculates future prices as: Current Price × (1 + Growth Rate)^Years. 
+                                                Growth rates vary by location and property type to reflect local market conditions. 
+                                                Please note that actual future prices may vary significantly due to economic changes, 
+                                                policy shifts, and unforeseen market events.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </main>
+                </>
+            );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
